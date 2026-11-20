@@ -1,8 +1,5 @@
-HOW THE NUMBERS IN THIS REPORT WERE CHECKED
-A short guide to CURIOSITY's checks (CURIOSITY version 1.14)
-
-CURIOSITY is a research assistant built on Claude (an AI). AI workers find the data, write the code and draft the text. Automatic scripts, which involve no AI, decide whether the work passes: a script cannot be persuaded. This note explains those checks, and also what they do not prove.
-
+ABOUT ME: I'm Mina Khella, BSc student of statistics and economics at Università degli studi di Milano Bicocca.
+CURIOSITY is a research assistant designed by me and built on Claude. AI workers find the data, write the code and draft the text. Automatic scripts, which involve no AI, decide whether the work passes, this note explains those checks, and also what they do not prove.
 
 1. BEFORE ANY DATA IS LOOKED AT
 
