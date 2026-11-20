@@ -2,7 +2,7 @@ Analysis of the public Olist dataset (Kaggle) to assess delivery service quality
 
 
 DELIVERABLES
-- 📄 RESULTS.pdf: a quick overview of the results of the researcg
+- 📄 RESULTS.pdf: a quick overview of the results of the research
 - 📊 Dashboard.xlsx
 - 🎞️ Research process.pdf
 
