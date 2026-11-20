@@ -1,0 +1,15 @@
+scheme,band,n_orders,mean_score,pct_low_score
+cut2,late_1_2,1356,3.5133,25.4425
+cut2,late_gt2,5025,1.9351,72.398
+cut2,on_time,89443,4.2904,9.2674
+cut3,late_1_3,1852,3.291,32.1274
+cut3,late_gt3,4529,1.8532,74.8068
+cut3,on_time,89443,4.2904,9.2674
+cut5,late_1_5,2722,2.9882,41.1462
+cut5,late_gt5,3659,1.7365,78.2454
+cut5,on_time,89443,4.2904,9.2674
+cut7,late_1_7,3600,2.7142,49.3889
+cut7,late_gt7,2781,1.6962,79.288
+cut7,on_time,89443,4.2904,9.2674
+strict,late_strict,7661,2.5651,54.066
+strict,on_time_strict,88163,4.2941,9.2216

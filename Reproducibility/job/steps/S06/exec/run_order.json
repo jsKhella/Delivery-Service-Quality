@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "python",
+    "script": "code/pareto.py",
+    "out": null
+  },
+  {
+    "kind": "python",
+    "script": "code/pareto.py",
+    "out": null
+  }
+]

@@ -1,0 +1,80 @@
+{
+  "n_carrier_before_approved": {
+    "code": "code/clean.py",
+    "description": "Negative handling time",
+    "unit": "orders",
+    "value": 1350.0
+  },
+  "n_clean_with_review": {
+    "code": "code/clean.py",
+    "description": "Kept orders with a review score",
+    "unit": "orders",
+    "value": 95824.0
+  },
+  "n_delivered_before_carrier": {
+    "code": "code/clean.py",
+    "description": "Negative transit time",
+    "unit": "orders",
+    "value": 23.0
+  },
+  "n_delivered_status": {
+    "code": "code/clean.py",
+    "description": "Orders with status delivered",
+    "unit": "orders",
+    "value": 96478.0
+  },
+  "n_lead_outliers": {
+    "code": "code/clean.py",
+    "description": "Lead time above 60 days",
+    "unit": "orders",
+    "value": 306.0
+  },
+  "n_missing_approved": {
+    "code": "code/clean.py",
+    "description": "Kept orders missing approval time",
+    "unit": "orders",
+    "value": 14.0
+  },
+  "n_missing_carrier": {
+    "code": "code/clean.py",
+    "description": "Kept orders missing carrier date",
+    "unit": "orders",
+    "value": 1.0
+  },
+  "n_orders_clean": {
+    "code": "code/clean.py",
+    "description": "Kept delivered orders",
+    "unit": "orders",
+    "value": 96470.0
+  },
+  "n_orders_multi_review": {
+    "code": "code/clean.py",
+    "description": "Orders with more than one review row",
+    "unit": "orders",
+    "value": 547.0
+  },
+  "n_orders_raw": {
+    "code": "code/clean.py",
+    "description": "Rows in raw orders file",
+    "unit": "orders",
+    "value": 99441.0
+  },
+  "n_removed_inconsistent": {
+    "code": "code/clean.py",
+    "description": "Removed: delivered or estimated date before purchase date",
+    "unit": "orders",
+    "value": 0.0
+  },
+  "n_removed_no_delivery_date": {
+    "code": "code/clean.py",
+    "description": "Delivered status, no customer delivery date, removed",
+    "unit": "orders",
+    "value": 8.0
+  },
+  "n_review_rows_raw": {
+    "code": "code/clean.py",
+    "description": "Rows in raw reviews file",
+    "unit": "rows",
+    "value": 99224.0
+  }
+}

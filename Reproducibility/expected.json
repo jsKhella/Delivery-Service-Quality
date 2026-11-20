@@ -1,0 +1,606 @@
+{
+  "report_id": "20261120T171130-3819d347a5",
+  "results": {
+    "n_orders_raw": {
+      "value": 99441.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_delivered_status": {
+      "value": 96478.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_removed_no_delivery_date": {
+      "value": 8.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_removed_inconsistent": {
+      "value": 0.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_orders_clean": {
+      "value": 96470.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_missing_approved": {
+      "value": 14.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_missing_carrier": {
+      "value": 1.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_carrier_before_approved": {
+      "value": 1350.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_delivered_before_carrier": {
+      "value": 23.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_lead_outliers": {
+      "value": 306.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_review_rows_raw": {
+      "value": 99224.0,
+      "unit": "rows",
+      "step": "S01"
+    },
+    "n_orders_multi_review": {
+      "value": 547.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_clean_with_review": {
+      "value": 95824.0,
+      "unit": "orders",
+      "step": "S01"
+    },
+    "n_item_rows_raw": {
+      "value": 112650.0,
+      "unit": "rows",
+      "step": "S02"
+    },
+    "n_order_seller_pairs": {
+      "value": 97811.0,
+      "unit": "pairs",
+      "step": "S02"
+    },
+    "n_multi_seller_orders": {
+      "value": 1275.0,
+      "unit": "orders",
+      "step": "S02"
+    },
+    "n_clean_orders_no_items": {
+      "value": 0.0,
+      "unit": "orders",
+      "step": "S02"
+    },
+    "n_sellers_active": {
+      "value": 2970.0,
+      "unit": "sellers",
+      "step": "S02"
+    },
+    "n_lanes_active": {
+      "value": 412.0,
+      "unit": "lanes",
+      "step": "S02"
+    },
+    "n_order_category_pairs": {
+      "value": 97268.0,
+      "unit": "pairs",
+      "step": "S02"
+    },
+    "n_items_no_category": {
+      "value": 1537.0,
+      "unit": "items",
+      "step": "S02"
+    },
+    "n_zip_prefixes_geo": {
+      "value": 19015.0,
+      "unit": "prefixes",
+      "step": "S02"
+    },
+    "n_pairs_no_geo": {
+      "value": 486.0,
+      "unit": "pairs",
+      "step": "S02"
+    },
+    "on_time_rate_pct": {
+      "value": 93.22690992018245,
+      "unit": "%",
+      "step": "S03"
+    },
+    "late_share_pct": {
+      "value": 6.7730900798175595,
+      "unit": "%",
+      "step": "S03"
+    },
+    "n_late_orders": {
+      "value": 6534.0,
+      "unit": "orders",
+      "step": "S03"
+    },
+    "lead_mean_days": {
+      "value": 12.558217098051975,
+      "unit": "days",
+      "step": "S03"
+    },
+    "lead_median_days": {
+      "value": 10.217476851851853,
+      "unit": "days",
+      "step": "S03"
+    },
+    "lead_p90_days": {
+      "value": 23.096377314814816,
+      "unit": "days",
+      "step": "S03"
+    },
+    "mean_delay_late_days": {
+      "value": 10.620140801958984,
+      "unit": "days",
+      "step": "S03"
+    },
+    "handling_mean_days": {
+      "value": 2.853391242647016,
+      "unit": "days",
+      "step": "S03"
+    },
+    "transit_mean_days": {
+      "value": 9.333301671977642,
+      "unit": "days",
+      "step": "S03"
+    },
+    "n_months_all": {
+      "value": 23.0,
+      "unit": "months",
+      "step": "S03"
+    },
+    "n_months_shown": {
+      "value": 20.0,
+      "unit": "months",
+      "step": "S03"
+    },
+    "best_month_on_time_pct": {
+      "value": 98.8353,
+      "unit": "%",
+      "step": "S03"
+    },
+    "worst_month_on_time_pct": {
+      "value": 81.0367,
+      "unit": "%",
+      "step": "S03"
+    },
+    "n_sellers_ranked": {
+      "value": 627.0,
+      "unit": "sellers",
+      "step": "S04"
+    },
+    "n_lanes_ranked": {
+      "value": 125.0,
+      "unit": "lanes",
+      "step": "S04"
+    },
+    "n_categories_ranked": {
+      "value": 63.0,
+      "unit": "categories",
+      "step": "S04"
+    },
+    "n_states_ranked": {
+      "value": 27.0,
+      "unit": "states",
+      "step": "S04"
+    },
+    "seller_late_rate_median_pct": {
+      "value": 5.4688,
+      "unit": "%",
+      "step": "S04"
+    },
+    "seller_late_rate_max_pct": {
+      "value": 32.5581,
+      "unit": "%",
+      "step": "S04"
+    },
+    "seller_late_rate_min_pct": {
+      "value": 0.0,
+      "unit": "%",
+      "step": "S04"
+    },
+    "lane_late_rate_max_pct": {
+      "value": 30.5556,
+      "unit": "%",
+      "step": "S04"
+    },
+    "lane_late_rate_min_pct": {
+      "value": 0.0,
+      "unit": "%",
+      "step": "S04"
+    },
+    "category_late_rate_max_pct": {
+      "value": 13.5135,
+      "unit": "%",
+      "step": "S04"
+    },
+    "category_late_rate_min_pct": {
+      "value": 0.0,
+      "unit": "%",
+      "step": "S04"
+    },
+    "state_late_rate_max_pct": {
+      "value": 21.4106,
+      "unit": "%",
+      "step": "S04"
+    },
+    "state_late_rate_min_pct": {
+      "value": 2.7586,
+      "unit": "%",
+      "step": "S04"
+    },
+    "n_late_pairs_total": {
+      "value": 6547.0,
+      "unit": "pairs",
+      "step": "S04"
+    },
+    "n_sellers_late_ge15": {
+      "value": 37.0,
+      "unit": "sellers",
+      "step": "S04"
+    },
+    "late_pairs_sellers_late_ge15": {
+      "value": 516.0,
+      "unit": "pairs",
+      "step": "S04"
+    },
+    "share_late_pairs_sellers_late_ge15_pct": {
+      "value": 7.881472430120666,
+      "unit": "%",
+      "step": "S04"
+    },
+    "n_late_pairs": {
+      "value": 6547.0,
+      "unit": "pairs",
+      "step": "S05"
+    },
+    "n_seller_only": {
+      "value": 826.0,
+      "unit": "pairs",
+      "step": "S05"
+    },
+    "n_carrier_only": {
+      "value": 5085.0,
+      "unit": "pairs",
+      "step": "S05"
+    },
+    "n_both": {
+      "value": 635.0,
+      "unit": "pairs",
+      "step": "S05"
+    },
+    "n_unclassified": {
+      "value": 1.0,
+      "unit": "pairs",
+      "step": "S05"
+    },
+    "pct_seller_only": {
+      "value": 12.618392911701804,
+      "unit": "%",
+      "step": "S05"
+    },
+    "pct_carrier_only": {
+      "value": 77.68102658111825,
+      "unit": "%",
+      "step": "S05"
+    },
+    "pct_both": {
+      "value": 9.700580507179957,
+      "unit": "%",
+      "step": "S05"
+    },
+    "pct_seller_involved": {
+      "value": 22.31897341888176,
+      "unit": "%",
+      "step": "S05"
+    },
+    "handling_mean_late_days": {
+      "value": 5.5696468203771845,
+      "unit": "days",
+      "step": "S05"
+    },
+    "handling_mean_ontime_days": {
+      "value": 2.6431434560673206,
+      "unit": "days",
+      "step": "S05"
+    },
+    "transit_mean_late_days": {
+      "value": 27.881255873674625,
+      "unit": "days",
+      "step": "S05"
+    },
+    "transit_mean_ontime_days": {
+      "value": 7.967511544511478,
+      "unit": "days",
+      "step": "S05"
+    },
+    "pct_ontime_pairs_handover_late": {
+      "value": 4.541768934081347,
+      "unit": "%",
+      "step": "S05"
+    },
+    "n_sellers_with_late": {
+      "value": 1274.0,
+      "unit": "count",
+      "step": "S06"
+    },
+    "n_sellers_for_50pct_late": {
+      "value": 98.0,
+      "unit": "count",
+      "step": "S06"
+    },
+    "pct_sellers_for_50pct_late": {
+      "value": 3.2996632996632997,
+      "unit": "%",
+      "step": "S06"
+    },
+    "n_sellers_for_80pct_late": {
+      "value": 398.0,
+      "unit": "count",
+      "step": "S06"
+    },
+    "pct_sellers_for_80pct_late": {
+      "value": 13.400673400673401,
+      "unit": "%",
+      "step": "S06"
+    },
+    "top20_sellers_late_share_pct": {
+      "value": 24.606690087062777,
+      "unit": "%",
+      "step": "S06"
+    },
+    "n_lanes_with_late": {
+      "value": 212.0,
+      "unit": "count",
+      "step": "S06"
+    },
+    "n_lanes_for_80pct_late": {
+      "value": 21.0,
+      "unit": "count",
+      "step": "S06"
+    },
+    "pct_lanes_for_80pct_late": {
+      "value": 5.097087378640777,
+      "unit": "%",
+      "step": "S06"
+    },
+    "top20_lanes_late_share_pct": {
+      "value": 79.86864212616466,
+      "unit": "%",
+      "step": "S06"
+    },
+    "n_reviewed_orders": {
+      "value": 95824.0,
+      "unit": "orders",
+      "step": "S07"
+    },
+    "review_mean_ontime": {
+      "value": 4.290386055923885,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_1_3": {
+      "value": 3.291036717062635,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_gt3": {
+      "value": 1.8531684698608963,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_gap_gt3": {
+      "value": 2.4372175860629888,
+      "unit": "score points",
+      "step": "S07"
+    },
+    "pct_low_ontime": {
+      "value": 9.267354628087162,
+      "unit": "%",
+      "step": "S07"
+    },
+    "pct_low_late_1_3": {
+      "value": 32.12742980561555,
+      "unit": "%",
+      "step": "S07"
+    },
+    "pct_low_late_gt3": {
+      "value": 74.80680061823803,
+      "unit": "%",
+      "step": "S07"
+    },
+    "review_mean_late_1_2": {
+      "value": 3.5132743362831858,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_gt2": {
+      "value": 1.9351243781094527,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_1_5": {
+      "value": 2.988243938280676,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_gt5": {
+      "value": 1.7365400382618201,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_1_7": {
+      "value": 2.714166666666667,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_gt7": {
+      "value": 1.6961524631427545,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_ontime_strict": {
+      "value": 4.294114310992139,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "review_mean_late_strict": {
+      "value": 2.565069834225297,
+      "unit": "score 1-5",
+      "step": "S07"
+    },
+    "spearman_delay_score": {
+      "value": -0.17644244393133116,
+      "unit": "correlation",
+      "step": "S07"
+    },
+    "est_lead_mean_days": {
+      "value": 24.37273763864414,
+      "unit": "days",
+      "step": "S08"
+    },
+    "act_lead_mean_days_cal": {
+      "value": 12.496848761272934,
+      "unit": "days",
+      "step": "S08"
+    },
+    "buffer_mean_days": {
+      "value": 11.875888877371203,
+      "unit": "days",
+      "step": "S08"
+    },
+    "n_lanes_late_ge15": {
+      "value": 10.0,
+      "unit": "lanes",
+      "step": "S08"
+    },
+    "late_pairs_lanes_late_ge15": {
+      "value": 308.0,
+      "unit": "pairs",
+      "step": "S08"
+    },
+    "share_late_pairs_lanes_ge15_pct": {
+      "value": 4.704444783870475,
+      "unit": "%",
+      "step": "S08"
+    },
+    "buffer_mean_lanes_ge15_days": {
+      "value": 9.444444444444445,
+      "unit": "days",
+      "step": "S08"
+    },
+    "buffer_mean_other_days": {
+      "value": 11.991402522065474,
+      "unit": "days",
+      "step": "S08"
+    }
+  },
+  "outputs": {
+    "S01/dq_log_orders.csv": "fc97ebc183e40c9fa583834b134b057def96a4812057d740ffe8d6baf6d4b087",
+    "S01/orders_clean.csv": "c9a62937dee53ade4944cfb0b4e8690ba161a9acb5723f5b835c23a1f63ee2b3",
+    "S02/dq_log.csv": "5c50d6c0d67d981ff83b5c2fc42d43fa74cdf7eef7e1e544b693f19a57ef132c",
+    "S02/geo_zip_avg.csv": "3fd39a5952a7204d812eaacd02362a5c8484fc14cc195281caef7768305058ec",
+    "S02/order_category.csv": "405b38b3ce169f7a229d680cc1cde3f3fe821c4b9b480a11a56e772958887973",
+    "S02/order_seller.csv": "d5e68f2e31e9ab6a933d074f67dc4778fa5a0437577ac5cdd69e40b1e024747f",
+    "S03/kpi_overall.csv": "12a3109802e87fe81c5676113bb3c344d90643884424f9413bdc8a3d97a48cf6",
+    "S03/monthly.csv": "3ba87108db9488c31ee4507c443f4c26fd4a40617be8a5c9f41cf17304910e35",
+    "S04/late_by_category.csv": "f08199f71a1516f1670f9e3eb596c4830bfedde037f9a96ac0adf9e748603bd3",
+    "S04/late_by_lane.csv": "c1c2bae1638deb5b5bd1f71471eab2e12ff29f951ce14117bdcfd808b8dc4bf5",
+    "S04/late_by_seller.csv": "0cc8de9e2b1a1824f1d9a96628996922edf9c911e4bf97045795e72df468277b",
+    "S04/late_by_state.csv": "e10c5bb76efa89b95574af30298f0a52be3e387c41f259612732345c99fdc08b",
+    "S05/late_split.csv": "3700721ffc17bcd2e3009623a2bbedc001557144b4085ce87557366737e5ef4a",
+    "S05/split_by_band.csv": "8941ac8f1d31ed294aa7ac548b7a4deece6c24a3b792405e9ad28992fcd3d101",
+    "S05/split_summary.csv": "282e8728f136e62d4bfb508f5dc048b3aafa06a56f9fb57c4e13616dfeeaac6a",
+    "S06/pareto_lanes.csv": "b947ec372d09e5198bacb654fe7bc42d86cb222715d6dfce54766f60e1bef7a9",
+    "S06/pareto_sellers.csv": "04eaa4935db69a69c04030e3d1edab1e9c08616f71d09f9aed92caecb3a97308",
+    "S07/review_bands.csv": "d5fe688bdedd87daa55faf613ce0445cefdca55032175e62b06afaffc6ea8d52",
+    "S08/lane_lead.csv": "2ea8d5dd48aa616310800a23513c3a3dde2cdaee0ce39b4b56baf01037334beb",
+    "S09/c1_monthly.csv": "fc5aa3e768c4b81a239a8a3a29c926808703a440052982c57a77b37b5808de73",
+    "S09/c2_state_late.csv": "c63ad34d2923b73994017db4c150bfe6fe3552a708e5ff0a8105944bd9cc4f26",
+    "S09/c3_split_by_band.csv": "8941ac8f1d31ed294aa7ac548b7a4deece6c24a3b792405e9ad28992fcd3d101",
+    "S09/c4_pareto_curve.csv": "7b84cc94025f48ffb5eeb1a0cac0b3a3f2af083806de4ba63e774b5df8436644",
+    "S09/c5_review_bands.csv": "8d352a1888bb5f45e8e5763c4adf9bb3a1c0f2607bd379f205839451722c19b5",
+    "S09/c6_lane_lead.csv": "38fc799abbcc1c55c432517184a3746d558db2cdc92e797a2e6ef5033efe945e",
+    "S09/t1_dq_log.csv": "5c50d6c0d67d981ff83b5c2fc42d43fa74cdf7eef7e1e544b693f19a57ef132c",
+    "S09/t2_kpis.csv": "12a3109802e87fe81c5676113bb3c344d90643884424f9413bdc8a3d97a48cf6",
+    "S09/t3_top_bottom.csv": "43026f0ca2cfca2bd9b3c22b391fdb3dc3f823c2f2af55fa2609e596a77c8232",
+    "S09/t4_split.csv": "5209b15a898e2fad68916cd0ae5ccac9fa9197dbcf3112cd102817180d5e63f0",
+    "S09/t5_pareto.csv": "dbb8808d32fb0e9becb62cb3bd6f21a910f2f541f2de3193f2ede6ed170e99e3",
+    "S09/t6_reviews.csv": "d5fe688bdedd87daa55faf613ce0445cefdca55032175e62b06afaffc6ea8d52",
+    "S10/t7_recommendations.csv": "a773422e6e7bb6ebf2bc9aa5f4498170a5d6669815728a160cd47ac2de9050d4"
+  },
+  "steps": [
+    {
+      "id": "S01",
+      "title": "Clean the delivered orders and their reviews",
+      "runs": 1
+    },
+    {
+      "id": "S02",
+      "title": "Link each order to its sellers, lanes, product categories and locations",
+      "runs": 1
+    },
+    {
+      "id": "S03",
+      "title": "Headline delivery figures overall and month by month",
+      "runs": 1
+    },
+    {
+      "id": "S04",
+      "title": "Late rates by lane, seller, product category and customer state",
+      "runs": 1
+    },
+    {
+      "id": "S05",
+      "title": "Split late orders into seller delay and carrier delay",
+      "runs": 1
+    },
+    {
+      "id": "S06",
+      "title": "The few sellers and lanes behind most late orders (Pareto)",
+      "runs": 2
+    },
+    {
+      "id": "S07",
+      "title": "How lateness relates to customer review scores",
+      "runs": 3
+    },
+    {
+      "id": "S08",
+      "title": "Promised against actual delivery time by lane",
+      "runs": 1
+    },
+    {
+      "id": "S09",
+      "title": "Prepare the tables and chart data for the report",
+      "runs": 1
+    },
+    {
+      "id": "S10",
+      "title": "Choose the three fixes to make first",
+      "runs": 1
+    },
+    {
+      "id": "S11",
+      "title": "Write the findings",
+      "runs": 0
+    }
+  ]
+}

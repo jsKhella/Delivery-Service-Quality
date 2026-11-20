@@ -1,0 +1,5 @@
+split_class,late_pairs,share_pct,mean_handling_days,mean_transit_days
+seller only,826,12.62,18.5847,9.8159
+carrier only,5085,77.67,2.8438,31.1764
+both,635,9.7,10.3654,24.9936
+unclassified,1,0.02,,

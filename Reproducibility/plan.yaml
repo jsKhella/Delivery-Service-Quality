@@ -1,0 +1,664 @@
+# Research plan for J0001: Olist delivery service quality.
+# Shape follows templates/plan_example_research.yaml. Times are minutes.
+job_type: research
+job_title: "How good is Olist's delivery service, where does it fail, what does lateness cost, and what should be fixed first?"
+key_results: [n_orders_clean, on_time_rate_pct, late_share_pct, lead_mean_days, lead_p90_days, pct_seller_only, pct_carrier_only, pct_both, pct_sellers_for_80pct_late, top20_lanes_late_share_pct, review_mean_ontime, review_mean_late_1_3, review_mean_late_gt3, review_gap_gt3, buffer_mean_days, share_late_pairs_sellers_late_ge15_pct, share_late_pairs_lanes_ge15_pct]
+notes: >-
+  Fixed rules (decided before seeing results).
+  Units: overall, monthly, customer-state and review figures are per delivered ORDER (orders file).
+  Seller and lane figures are per ORDER-SELLER PAIR (distinct order_id + seller_id among the order's items),
+  category figures per ORDER-CATEGORY PAIR, both inheriting the order's delay. For the ~1 percent multi-seller
+  orders a late order therefore counts once for each seller in it; this is documented in the data-quality log.
+  Dates: delay_days = calendar date of order_delivered_customer_date minus calendar date of order_estimated_delivery_date
+  (whole days, time of day ignored), positive = late, on time = delay_days <= 0, late = delay_days >= 1.
+  Lead time = order_delivered_customer_date minus order_purchase_timestamp, full timestamps, in decimal days (hours / 24).
+  Handling = order_delivered_carrier_date minus order_approved_at, transit = order_delivered_customer_date minus
+  order_delivered_carrier_date, both decimal days. Negative handling or transit values are set to missing (kept order).
+  Month = calendar month of order_purchase_timestamp. Monthly charts show only months with at least 500 delivered orders.
+  Rankings by late rate use a minimum of 30 delivered orders (or pairs). Lead-time outlier flag: lead time above 60 days,
+  flagged and kept. Reviews: one per order, the row with the latest review_answer_timestamp (ties - latest
+  review_creation_date, then highest review_id). Low score = 1 or 2 stars. Percentiles use linear interpolation
+  (pandas default, DuckDB quantile_cont). Seller-vs-carrier rule is written in step S05 and must not change.
+  Scorecard thresholds for Q4 sizing are fixed now - seller or lane late rate of at least 15 percent (about twice the
+  expected overall rate). Geolocation is averaged per zip prefix and used only for a seller-to-customer distance column.
+  Olist is a parcel network, not full-truckload trucking - the report says operations-quality methods are applied to parcels.
+report_items:
+  - id: T1
+    kind: table
+    title: "Data-quality log: what was found, removed or fixed, and why"
+    question: Q1
+    data: "S09:outputs/t1_dq_log.csv"
+  - id: T2
+    kind: table
+    title: "Headline delivery KPIs, all delivered orders"
+    question: Q1
+    data: "S09:outputs/t2_kpis.csv"
+  - id: T3
+    kind: table
+    title: "Best and worst lanes, sellers and categories by late rate (at least 30 delivered orders)"
+    question: Q1
+    data: "S09:outputs/t3_top_bottom.csv"
+  - id: T4
+    kind: table
+    title: "Late orders split into seller delay and carrier delay"
+    question: Q2
+    data: "S09:outputs/t4_split.csv"
+  - id: T5
+    kind: table
+    title: "The 20 sellers and 20 lanes behind the most late orders (Pareto)"
+    question: Q2
+    data: "S09:outputs/t5_pareto.csv"
+  - id: T6
+    kind: table
+    title: "Review score by delay band, with other cut-offs as a sensitivity test"
+    question: Q3
+    data: "S09:outputs/t6_reviews.csv"
+  - id: T7
+    kind: table
+    title: "Three recommendations and the size of the problem each targets"
+    question: Q4
+    data: "S10:outputs/t7_recommendations.csv"
+  - id: C1
+    kind: chart
+    title: "On-time rate and late share by purchase month (months with at least 500 delivered orders)"
+    question: Q1
+    data: "S09:outputs/c1_monthly.csv"
+    chart: {type: line, x: month, y: [on_time_rate_pct, late_share_pct], y_label: "% of delivered orders"}
+  - id: C2
+    kind: chart
+    title: "Late share by customer state"
+    question: Q1
+    data: "S09:outputs/c2_state_late.csv"
+    chart: {type: bar, x: customer_state, y: [late_share_pct], y_label: "% of delivered orders late"}
+  - id: C3
+    kind: chart
+    title: "Seller delay against carrier delay among late orders, by days late"
+    question: Q2
+    data: "S09:outputs/c3_split_by_band.csv"
+    chart: {type: column, x: days_late_band, y: [seller_only, both, carrier_only], y_label: "late order-seller pairs"}
+  - id: C4
+    kind: chart
+    title: "Pareto curve: cumulative share of late orders by share of sellers (sellers ranked by late orders)"
+    question: Q2
+    data: "S09:outputs/c4_pareto_curve.csv"
+    chart: {type: line, x: pct_of_sellers, y: [cum_late_share_pct], y_label: "cumulative % of late orders"}
+  - id: C5
+    kind: chart
+    title: "Average review score by delay band"
+    question: Q3
+    data: "S09:outputs/c5_review_bands.csv"
+    chart: {type: bar, x: delay_band, y: [mean_score], y_label: "average review score (1-5)"}
+  - id: C6
+    kind: chart
+    title: "Promised against actual lead time on the 20 busiest lanes"
+    question: Q4
+    data: "S09:outputs/c6_lane_lead.csv"
+    chart: {type: bar, x: lane, y: [est_lead_mean_days, act_lead_mean_days], y_label: "days from purchase"}
+steps:
+  - id: S01
+    title: Clean the delivered orders and their reviews
+    kind: data
+    goal: >-
+      From the raw orders, reviews and customers files build one row per delivered order. Keep order_status 'delivered'.
+      Remove orders with no customer delivery date, delivered calendar date before purchase calendar date, or estimated
+      date before purchase date, counting each removal. Compute delay_days, late (0/1), lead_time_days, handling_days,
+      transit_days (negatives set to missing and counted), est_lead_days_cal (estimated date minus purchase date) and
+      act_lead_days_cal (delivered date minus purchase date) in calendar days, purchase_month (YYYY-MM), lead_outlier flag
+      (lead above 60 days). Add customer_state and customer_zip_code_prefix. De-duplicate reviews to one per order with
+      the notes rule and attach review_score. Write a data-quality log of every issue found, with counts, action and reason.
+    brief_sections: [Definitions, Assumptions, Scope]
+    inputs: ["raw:olist_orders_dataset.csv", "raw:olist_order_reviews_dataset.csv", "raw:olist_customers_dataset.csv"]
+    outputs: ["outputs/orders_clean.csv", "outputs/dq_log_orders.csv"]
+    results: [n_orders_raw, n_delivered_status, n_removed_no_delivery_date, n_removed_inconsistent, n_orders_clean, n_missing_approved, n_missing_carrier, n_carrier_before_approved, n_delivered_before_carrier, n_lead_outliers, n_review_rows_raw, n_orders_multi_review, n_clean_with_review]
+    definitions:
+      n_orders_raw: "Rows in the raw orders file, count of orders."
+      n_delivered_status: "Orders with order_status equal to 'delivered' in the raw orders file, count."
+      n_removed_no_delivery_date: "Delivered-status orders removed because order_delivered_customer_date is missing, count."
+      n_removed_inconsistent: "Delivered-status orders (with a delivery date) removed because the delivered calendar date is before the purchase calendar date or the estimated date is before the purchase calendar date, count."
+      n_orders_clean: "Delivered-status orders kept after the two removals above, rows of orders_clean.csv, count."
+      n_missing_approved: "Kept orders whose order_approved_at is missing (handling time not computed), count."
+      n_missing_carrier: "Kept orders whose order_delivered_carrier_date is missing (handling and transit not computed), count."
+      n_carrier_before_approved: "Kept orders whose carrier timestamp is earlier than the approval timestamp (negative handling time, set to missing), count."
+      n_delivered_before_carrier: "Kept orders whose customer delivery timestamp is earlier than the carrier timestamp (negative transit time, set to missing), count."
+      n_lead_outliers: "Kept orders with lead_time_days above 60 (flagged as outliers, kept in all figures), count."
+      n_review_rows_raw: "Rows in the raw reviews file, count."
+      n_orders_multi_review: "Distinct order_ids that have more than one row in the raw reviews file (all orders, any status), count."
+      n_clean_with_review: "Kept orders that have a review_score after de-duplication to one review per order, count."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute every count with DuckDB SQL (./cq sql) directly on the raw CSVs, using CAST to DATE for calendar dates and a ROW_NUMBER window for the review de-duplication, instead of pandas."
+    tolerance_pct: 0.1
+    checks:
+      - {type: row_count, file: outputs/orders_clean.csv, min: 95000, max: 96500}
+      - {type: unique, file: outputs/orders_clean.csv, columns: [order_id]}
+      - {type: no_missing, file: outputs/orders_clean.csv, columns: [order_id, customer_state, purchase_month, delay_days, late, lead_time_days, est_lead_days_cal, act_lead_days_cal]}
+      - {type: range, file: outputs/orders_clean.csv, column: delay_days, min: -200, max: 250}
+      - {type: range, file: outputs/orders_clean.csv, column: late, min: 0, max: 1}
+      - {type: range, file: outputs/orders_clean.csv, column: lead_time_days, min: 0, max: 250}
+      - {type: range, file: outputs/orders_clean.csv, column: est_lead_days_cal, min: 0, max: 200}
+      - {type: row_count, file: outputs/dq_log_orders.csv, min: 6, max: 20}
+      - {type: no_missing, file: outputs/dq_log_orders.csv, columns: [issue, source_file, rows_found, action, rows_removed, reason]}
+      - {type: result_range, result: n_orders_raw, min: 99441, max: 99441}
+      - {type: result_range, result: n_review_rows_raw, min: 99224, max: 99224}
+      - {type: result_range, result: n_delivered_status, min: 95000, max: 97500}
+      - {type: result_range, result: n_removed_no_delivery_date, min: 0, max: 100}
+      - {type: result_range, result: n_removed_inconsistent, min: 0, max: 500}
+      - {type: result_range, result: n_orders_clean, min: 95000, max: 96500}
+      - {type: result_range, result: n_missing_approved, min: 0, max: 200}
+      - {type: result_range, result: n_missing_carrier, min: 0, max: 200}
+      - {type: result_range, result: n_carrier_before_approved, min: 0, max: 3000}
+      - {type: result_range, result: n_delivered_before_carrier, min: 0, max: 500}
+      - {type: result_range, result: n_lead_outliers, min: 0, max: 2000}
+      - {type: result_range, result: n_orders_multi_review, min: 0, max: 2000}
+      - {type: result_range, result: n_clean_with_review, min: 90000, max: 96500}
+    expectations:
+      - {type: share_present, file: outputs/orders_clean.csv, column: review_score, min_pct: 95,
+         why: "Q3 compares review scores across delay bands; if many delivered orders lack a review the comparison is biased."}
+      - {type: share_present, file: outputs/orders_clean.csv, column: handling_days, min_pct: 95,
+         why: "Q2 splits delays into seller and carrier stages; too many missing or negative handling times would undermine the split."}
+      - {type: share_present, file: outputs/orders_clean.csv, column: transit_days, min_pct: 98,
+         why: "Carrier transit time is half of the Q2 split."}
+    time_min: 30
+    time_max: 45
+    stop_and_ask: "Status 'delivered' covers far fewer than 95,000 orders, the estimated date carries a time of day for many orders, more than 500 orders would need removal, or the review file cannot be matched to orders by order_id."
+  - id: S02
+    title: Link each order to its sellers, lanes, product categories and locations
+    kind: data
+    goal: >-
+      From the raw items, sellers, products, translation and geolocation files, and S01's orders_clean.csv, build
+      order_seller.csv (one row per distinct order_id + seller_id among items of clean orders, with seller_state,
+      customer_state, lane 'SELLERSTATE-CUSTOMERSTATE', shipping_limit_date = latest shipping_limit_date of that seller's
+      items in the order, n_items, distance_km by haversine between averaged zip-prefix coordinates, and the order's
+      delay_days, late, carrier and delivered timestamps, estimated date, est_lead_days_cal, act_lead_days_cal, handling_days,
+      transit_days) and order_category.csv (one row per distinct order_id + English category, Portuguese name if no
+      translation, 'unknown' if no category). Append the issues found here to S01's log to give the full dq_log.csv.
+    brief_sections: [Definitions, Assumptions]
+    inputs: ["S01:outputs/orders_clean.csv", "S01:outputs/dq_log_orders.csv", "raw:olist_order_items_dataset.csv", "raw:olist_sellers_dataset.csv", "raw:olist_products_dataset.csv", "raw:product_category_name_translation.csv", "raw:olist_geolocation_dataset.csv"]
+    outputs: ["outputs/order_seller.csv", "outputs/order_category.csv", "outputs/geo_zip_avg.csv", "outputs/dq_log.csv"]
+    results: [n_item_rows_raw, n_order_seller_pairs, n_multi_seller_orders, n_clean_orders_no_items, n_sellers_active, n_lanes_active, n_order_category_pairs, n_items_no_category, n_zip_prefixes_geo, n_pairs_no_geo]
+    definitions:
+      n_item_rows_raw: "Rows in the raw order items file, count."
+      n_order_seller_pairs: "Distinct (order_id, seller_id) pairs among item rows of the clean orders, rows of order_seller.csv, count."
+      n_multi_seller_orders: "Clean orders whose items come from two or more distinct sellers, count."
+      n_clean_orders_no_items: "Clean orders with no row in the items file, count."
+      n_sellers_active: "Distinct seller_id values in order_seller.csv, count."
+      n_lanes_active: "Distinct lane values (seller state to customer state) in order_seller.csv, count."
+      n_order_category_pairs: "Distinct (order_id, category) pairs among item rows of the clean orders, rows of order_category.csv, count."
+      n_items_no_category: "Item rows of clean orders whose product has no category name (labelled 'unknown'), count."
+      n_zip_prefixes_geo: "Distinct zip code prefixes in the raw geolocation file, rows of geo_zip_avg.csv (mean latitude and longitude per prefix), count."
+      n_pairs_no_geo: "Order-seller pairs where the seller or customer zip prefix is absent from geo_zip_avg.csv (distance_km missing), count."
+    model: sonnet
+    critical: false
+    checks:
+      - {type: row_count, file: outputs/order_seller.csv, min: 95000, max: 99500}
+      - {type: unique, file: outputs/order_seller.csv, columns: [order_id, seller_id]}
+      - {type: no_missing, file: outputs/order_seller.csv, columns: [order_id, seller_id, seller_state, customer_state, lane, shipping_limit_date, delay_days, late]}
+      - {type: range, file: outputs/order_seller.csv, column: late, min: 0, max: 1}
+      - {type: range, file: outputs/order_seller.csv, column: n_items, min: 1, max: 30}
+      - {type: row_count, file: outputs/order_category.csv, min: 95000, max: 100000}
+      - {type: unique, file: outputs/order_category.csv, columns: [order_id, category]}
+      - {type: no_missing, file: outputs/order_category.csv, columns: [order_id, category, late]}
+      - {type: row_count, file: outputs/geo_zip_avg.csv, min: 15000, max: 20000}
+      - {type: unique, file: outputs/geo_zip_avg.csv, columns: [zip_code_prefix]}
+      - {type: row_count, file: outputs/dq_log.csv, min: 8, max: 30}
+      - {type: no_missing, file: outputs/dq_log.csv, columns: [issue, source_file, rows_found, action, rows_removed, reason]}
+      - {type: result_range, result: n_item_rows_raw, min: 112650, max: 112650}
+      - {type: result_range, result: n_order_seller_pairs, min: 95000, max: 99500}
+      - {type: result_range, result: n_multi_seller_orders, min: 0, max: 3000}
+      - {type: result_range, result: n_clean_orders_no_items, min: 0, max: 50}
+      - {type: result_range, result: n_sellers_active, min: 2500, max: 3200}
+      - {type: result_range, result: n_lanes_active, min: 250, max: 729}
+      - {type: result_range, result: n_order_category_pairs, min: 95000, max: 100000}
+      - {type: result_range, result: n_items_no_category, min: 0, max: 3000}
+      - {type: result_range, result: n_zip_prefixes_geo, min: 15000, max: 20000}
+      - {type: result_range, result: n_pairs_no_geo, min: 0, max: 3000}
+    expectations:
+      - {type: share_present, file: outputs/order_seller.csv, column: distance_km, min_pct: 95,
+         why: "The averaged-geolocation distance is used as lane context; much lower coverage would mean the zip join is broken."}
+      - {type: row_count, file: outputs/order_seller.csv, min: 95000, max: 99500,
+         why: "Seller, lane and Pareto steps assume nearly every clean order links to at least one seller."}
+    time_min: 25
+    time_max: 45
+    stop_and_ask: "More than 50 clean orders have no items, a seller_id in items is missing from the sellers file, or state codes are not two-letter Brazilian states."
+  - id: S03
+    title: Headline delivery figures overall and month by month
+    kind: analysis
+    goal: >-
+      On orders_clean.csv compute kpi_overall.csv with exactly 10 rows (metric, value, unit): delivered orders, on-time rate,
+      late share, late count, mean, median and 90th-percentile
+      lead time, mean delay of late orders, mean handling and transit times, and a monthly table (purchase month,
+      delivered, late, on_time_rate_pct, late_share_pct, lead_mean_days, shown = delivered at least 500).
+    brief_sections: [Research questions, Definitions, Assumptions]
+    inputs: ["S01:outputs/orders_clean.csv"]
+    outputs: ["outputs/kpi_overall.csv", "outputs/monthly.csv"]
+    results: [on_time_rate_pct, late_share_pct, n_late_orders, lead_mean_days, lead_median_days, lead_p90_days, mean_delay_late_days, handling_mean_days, transit_mean_days, n_months_all, n_months_shown, best_month_on_time_pct, worst_month_on_time_pct]
+    definitions:
+      on_time_rate_pct: "Clean delivered orders with delay_days <= 0 divided by all clean delivered orders, in %, from orders_clean.csv."
+      late_share_pct: "Clean delivered orders with delay_days >= 1 divided by all clean delivered orders, in %, from orders_clean.csv."
+      n_late_orders: "Clean delivered orders with delay_days >= 1, count."
+      lead_mean_days: "Mean of lead_time_days (delivered timestamp minus purchase timestamp, decimal days) over all clean delivered orders."
+      lead_median_days: "Median of lead_time_days over all clean delivered orders, days."
+      lead_p90_days: "90th percentile (linear interpolation) of lead_time_days over all clean delivered orders, days."
+      mean_delay_late_days: "Mean delay_days over clean delivered orders with delay_days >= 1, calendar days."
+      handling_mean_days: "Mean handling_days (carrier timestamp minus approval timestamp) over clean orders where it is not missing, decimal days."
+      transit_mean_days: "Mean transit_days (delivery timestamp minus carrier timestamp) over clean orders where it is not missing, decimal days."
+      n_months_all: "Distinct purchase months among clean delivered orders, count."
+      n_months_shown: "Purchase months with at least 500 clean delivered orders, count."
+      best_month_on_time_pct: "Highest monthly on-time rate among months with at least 500 clean delivered orders, in %."
+      worst_month_on_time_pct: "Lowest monthly on-time rate among months with at least 500 clean delivered orders, in %."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute from orders_clean.csv with DuckDB SQL (./cq sql), using AVG, MEDIAN, quantile_cont(0.9) and GROUP BY purchase month, instead of pandas."
+    tolerance_pct: 0.5
+    checks:
+      - {type: row_count, file: outputs/kpi_overall.csv, min: 10, max: 10}
+      - {type: no_missing, file: outputs/kpi_overall.csv, columns: [metric, value, unit]}
+      - {type: unique, file: outputs/kpi_overall.csv, columns: [metric]}
+      - {type: row_count, file: outputs/monthly.csv, min: 20, max: 26}
+      - {type: unique, file: outputs/monthly.csv, columns: [month]}
+      - {type: no_missing, file: outputs/monthly.csv, columns: [month, delivered, late, on_time_rate_pct, late_share_pct, shown]}
+      - {type: range, file: outputs/monthly.csv, column: on_time_rate_pct, min: 0, max: 100}
+      - {type: range, file: outputs/monthly.csv, column: late_share_pct, min: 0, max: 100}
+      - {type: result_range, result: on_time_rate_pct, min: 85, max: 97}
+      - {type: result_range, result: late_share_pct, min: 3, max: 15}
+      - {type: result_range, result: n_late_orders, min: 3000, max: 14000}
+      - {type: result_range, result: lead_mean_days, min: 8, max: 18}
+      - {type: result_range, result: lead_median_days, min: 6, max: 15}
+      - {type: result_range, result: lead_p90_days, min: 15, max: 35}
+      - {type: result_range, result: mean_delay_late_days, min: 1, max: 30}
+      - {type: result_range, result: handling_mean_days, min: 1, max: 7}
+      - {type: result_range, result: transit_mean_days, min: 4, max: 16}
+      - {type: result_range, result: n_months_all, min: 20, max: 26}
+      - {type: result_range, result: n_months_shown, min: 15, max: 22}
+      - {type: result_range, result: best_month_on_time_pct, min: 80, max: 100}
+      - {type: result_range, result: worst_month_on_time_pct, min: 50, max: 98}
+    time_min: 20
+    time_max: 35
+    stop_and_ask: "Fewer than 15 months reach 500 delivered orders, or on-time rate and late share do not add up to 100% within rounding."
+  - id: S04
+    title: Late rates by lane, seller, product category and customer state
+    kind: analysis
+    goal: >-
+      Late rate (late / delivered, in %) per seller and per lane from order_seller.csv, per category from
+      order_category.csv, per customer state from orders_clean.csv. Flag ranked = at least 30 delivered orders (pairs).
+      Rank ranked groups worst-first (late rate desc, delivered desc, name asc) and best-first (late rate asc, delivered desc,
+      name asc). Count ranked sellers and lanes at or above the 15% scorecard threshold and the late pairs they hold.
+    brief_sections: [Research questions, Definitions]
+    inputs: ["S01:outputs/orders_clean.csv", "S02:outputs/order_seller.csv", "S02:outputs/order_category.csv"]
+    outputs: ["outputs/late_by_seller.csv", "outputs/late_by_lane.csv", "outputs/late_by_category.csv", "outputs/late_by_state.csv"]
+    results: [n_sellers_ranked, n_lanes_ranked, n_categories_ranked, n_states_ranked, seller_late_rate_median_pct, seller_late_rate_max_pct, seller_late_rate_min_pct, lane_late_rate_max_pct, lane_late_rate_min_pct, category_late_rate_max_pct, category_late_rate_min_pct, state_late_rate_max_pct, state_late_rate_min_pct, n_late_pairs_total, n_sellers_late_ge15, late_pairs_sellers_late_ge15, share_late_pairs_sellers_late_ge15_pct]
+    definitions:
+      n_sellers_ranked: "Sellers with at least 30 delivered order-seller pairs in order_seller.csv, count."
+      n_lanes_ranked: "Lanes with at least 30 delivered order-seller pairs in order_seller.csv, count."
+      n_categories_ranked: "Categories with at least 30 delivered order-category pairs in order_category.csv, count."
+      n_states_ranked: "Customer states with at least 30 clean delivered orders in orders_clean.csv, count."
+      seller_late_rate_median_pct: "Median late rate (late pairs / delivered pairs, %) across ranked sellers."
+      seller_late_rate_max_pct: "Highest late rate across ranked sellers, %."
+      seller_late_rate_min_pct: "Lowest late rate across ranked sellers, %."
+      lane_late_rate_max_pct: "Highest late rate across ranked lanes, %."
+      lane_late_rate_min_pct: "Lowest late rate across ranked lanes, %."
+      category_late_rate_max_pct: "Highest late rate across ranked categories (late order-category pairs / delivered pairs), %."
+      category_late_rate_min_pct: "Lowest late rate across ranked categories, %."
+      state_late_rate_max_pct: "Highest late share across ranked customer states (late orders / clean delivered orders), %."
+      state_late_rate_min_pct: "Lowest late share across ranked customer states, %."
+      n_late_pairs_total: "Order-seller pairs in order_seller.csv with late = 1, count."
+      n_sellers_late_ge15: "Ranked sellers (at least 30 pairs) with a late rate of 15% or more, count."
+      late_pairs_sellers_late_ge15: "Late order-seller pairs belonging to the sellers counted in n_sellers_late_ge15, count."
+      share_late_pairs_sellers_late_ge15_pct: "late_pairs_sellers_late_ge15 divided by n_late_pairs_total, in %."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute every group rate and count with DuckDB SQL (./cq sql) GROUP BY with HAVING COUNT(*) >= 30, instead of pandas."
+    tolerance_pct: 0.1
+    checks:
+      - {type: row_count, file: outputs/late_by_seller.csv, min: 2500, max: 3200}
+      - {type: unique, file: outputs/late_by_seller.csv, columns: [seller_id]}
+      - {type: no_missing, file: outputs/late_by_seller.csv, columns: [seller_id, delivered, late, late_rate_pct, ranked]}
+      - {type: range, file: outputs/late_by_seller.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/late_by_lane.csv, min: 250, max: 729}
+      - {type: unique, file: outputs/late_by_lane.csv, columns: [lane]}
+      - {type: range, file: outputs/late_by_lane.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/late_by_category.csv, min: 60, max: 80}
+      - {type: unique, file: outputs/late_by_category.csv, columns: [category]}
+      - {type: range, file: outputs/late_by_category.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/late_by_state.csv, min: 27, max: 27}
+      - {type: unique, file: outputs/late_by_state.csv, columns: [customer_state]}
+      - {type: range, file: outputs/late_by_state.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: result_range, result: n_sellers_ranked, min: 300, max: 1000}
+      - {type: result_range, result: n_lanes_ranked, min: 80, max: 400}
+      - {type: result_range, result: n_categories_ranked, min: 40, max: 75}
+      - {type: result_range, result: n_states_ranked, min: 20, max: 27}
+      - {type: result_range, result: seller_late_rate_median_pct, min: 0, max: 25}
+      - {type: result_range, result: seller_late_rate_max_pct, min: 10, max: 100}
+      - {type: result_range, result: seller_late_rate_min_pct, min: 0, max: 10}
+      - {type: result_range, result: lane_late_rate_max_pct, min: 10, max: 100}
+      - {type: result_range, result: lane_late_rate_min_pct, min: 0, max: 10}
+      - {type: result_range, result: category_late_rate_max_pct, min: 5, max: 60}
+      - {type: result_range, result: category_late_rate_min_pct, min: 0, max: 10}
+      - {type: result_range, result: state_late_rate_max_pct, min: 5, max: 50}
+      - {type: result_range, result: state_late_rate_min_pct, min: 0, max: 15}
+      - {type: result_range, result: n_late_pairs_total, min: 3000, max: 15000}
+      - {type: result_range, result: n_sellers_late_ge15, min: 0, max: 1000}
+      - {type: result_range, result: late_pairs_sellers_late_ge15, min: 0, max: 15000}
+      - {type: result_range, result: share_late_pairs_sellers_late_ge15_pct, min: 0, max: 100}
+    time_min: 25
+    time_max: 40
+    stop_and_ask: "Fewer than 300 sellers or 80 lanes reach 30 delivered orders, or a customer state has fewer than 30 orders (the C2 chart would need a different rule)."
+  - id: S05
+    title: Split late orders into seller delay and carrier delay
+    kind: analysis
+    goal: >-
+      Apply this fixed rule to every late order-seller pair in order_seller.csv. handover_late = calendar date of the carrier
+      timestamp is after the calendar date of shipping_limit_date. transit_budget = estimated date minus shipping_limit date
+      (calendar days). carrier_over = (delivered date minus carrier date, calendar days) is greater than transit_budget.
+      Class: 'seller only' = handover_late and not carrier_over (the carrier would have been on time had the seller been on time),
+      'carrier only' = not handover_late, 'both' = handover_late and carrier_over, 'unclassified' = carrier timestamp missing
+      or delivered before carrier. Summarise counts and shares, and counts by class within days-late bands 1-3, 4-7, 8-14, 15+.
+      Also compare mean handling and transit days of late versus on-time pairs.
+    brief_sections: [Research questions, Definitions]
+    inputs: ["S02:outputs/order_seller.csv"]
+    outputs: ["outputs/late_split.csv", "outputs/split_summary.csv", "outputs/split_by_band.csv"]
+    results: [n_late_pairs, n_seller_only, n_carrier_only, n_both, n_unclassified, pct_seller_only, pct_carrier_only, pct_both, pct_seller_involved, handling_mean_late_days, handling_mean_ontime_days, transit_mean_late_days, transit_mean_ontime_days, pct_ontime_pairs_handover_late]
+    definitions:
+      n_late_pairs: "Order-seller pairs with late = 1 in order_seller.csv, rows of late_split.csv, count."
+      n_seller_only: "Late pairs classified 'seller only' under the S05 rule, count."
+      n_carrier_only: "Late pairs classified 'carrier only' under the S05 rule, count."
+      n_both: "Late pairs classified 'both' under the S05 rule, count."
+      n_unclassified: "Late pairs with missing carrier timestamp or delivery before carrier handover, count."
+      pct_seller_only: "n_seller_only divided by classified late pairs (n_late_pairs minus n_unclassified), in %."
+      pct_carrier_only: "n_carrier_only divided by classified late pairs, in %."
+      pct_both: "n_both divided by classified late pairs, in %."
+      pct_seller_involved: "(n_seller_only plus n_both) divided by classified late pairs, in % (late pairs where the seller handed over after the shipping limit)."
+      handling_mean_late_days: "Mean handling_days over late pairs where handling_days is not missing, decimal days."
+      handling_mean_ontime_days: "Mean handling_days over on-time pairs (late = 0) where handling_days is not missing, decimal days."
+      transit_mean_late_days: "Mean transit_days over late pairs where transit_days is not missing, decimal days."
+      transit_mean_ontime_days: "Mean transit_days over on-time pairs where transit_days is not missing, decimal days."
+      pct_ontime_pairs_handover_late: "On-time pairs with a carrier timestamp whose carrier calendar date is after the shipping_limit calendar date, divided by on-time pairs with a carrier timestamp, in %."
+    model: sonnet
+    critical: true
+    replication_method: "Reclassify with a single DuckDB SQL CASE expression (./cq sql) on order_seller.csv, using CAST to DATE and date differences, instead of pandas."
+    tolerance_pct: 0.1
+    checks:
+      - {type: row_count, file: outputs/late_split.csv, min: 3000, max: 15000}
+      - {type: unique, file: outputs/late_split.csv, columns: [order_id, seller_id]}
+      - {type: no_missing, file: outputs/late_split.csv, columns: [order_id, seller_id, delay_days, split_class]}
+      - {type: range, file: outputs/late_split.csv, column: delay_days, min: 1, max: 250}
+      - {type: row_count, file: outputs/split_summary.csv, min: 4, max: 4}
+      - {type: unique, file: outputs/split_summary.csv, columns: [split_class]}
+      - {type: no_missing, file: outputs/split_summary.csv, columns: [split_class, late_pairs, share_pct]}
+      - {type: range, file: outputs/split_summary.csv, column: share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/split_by_band.csv, min: 4, max: 4}
+      - {type: unique, file: outputs/split_by_band.csv, columns: [days_late_band]}
+      - {type: no_missing, file: outputs/split_by_band.csv, columns: [days_late_band, seller_only, both, carrier_only, unclassified]}
+      - {type: result_range, result: n_late_pairs, min: 3000, max: 15000}
+      - {type: result_range, result: n_unclassified, min: 0, max: 300}
+      - {type: result_range, result: pct_seller_only, min: 0, max: 100}
+      - {type: result_range, result: pct_carrier_only, min: 0, max: 100}
+      - {type: result_range, result: pct_both, min: 0, max: 100}
+      - {type: result_range, result: pct_seller_involved, min: 0, max: 100}
+      - {type: result_range, result: handling_mean_late_days, min: 0.5, max: 20}
+      - {type: result_range, result: handling_mean_ontime_days, min: 0.5, max: 10}
+      - {type: result_range, result: transit_mean_late_days, min: 5, max: 60}
+      - {type: result_range, result: transit_mean_ontime_days, min: 3, max: 20}
+      - {type: result_range, result: pct_ontime_pairs_handover_late, min: 0, max: 50}
+    time_min: 25
+    time_max: 40
+    stop_and_ask: "shipping_limit_date is missing for many pairs, more than 300 late pairs are unclassified, or the rule gives a 'carrier only' pair that is not actually carrier-over (would mean a date-handling bug)."
+  - id: S06
+    title: The few sellers and lanes behind most late orders (Pareto)
+    kind: analysis
+    goal: >-
+      Rank all active sellers by late pairs (desc, ties seller_id asc), with cumulative late count and cumulative share of
+      n_late_pairs; same for all active lanes (ties lane asc). No minimum volume. Find how many sellers and lanes are needed
+      to reach 50% and 80% of late pairs, and the shares held by the top 20.
+    brief_sections: [Research questions, Definitions]
+    inputs: ["S02:outputs/order_seller.csv"]
+    outputs: ["outputs/pareto_sellers.csv", "outputs/pareto_lanes.csv"]
+    results: [n_sellers_with_late, n_sellers_for_50pct_late, pct_sellers_for_50pct_late, n_sellers_for_80pct_late, pct_sellers_for_80pct_late, top20_sellers_late_share_pct, n_lanes_with_late, n_lanes_for_80pct_late, pct_lanes_for_80pct_late, top20_lanes_late_share_pct]
+    definitions:
+      n_sellers_with_late: "Active sellers with at least one late order-seller pair, count."
+      n_sellers_for_50pct_late: "Smallest number of top-ranked sellers (by late pairs) whose cumulative late pairs reach at least 50% of all late pairs, count."
+      pct_sellers_for_50pct_late: "n_sellers_for_50pct_late divided by all active sellers (n_sellers_active), in %."
+      n_sellers_for_80pct_late: "Smallest number of top-ranked sellers whose cumulative late pairs reach at least 80% of all late pairs, count."
+      pct_sellers_for_80pct_late: "n_sellers_for_80pct_late divided by all active sellers, in %."
+      top20_sellers_late_share_pct: "Late pairs of the 20 top-ranked sellers divided by all late pairs, in %."
+      n_lanes_with_late: "Active lanes with at least one late pair, count."
+      n_lanes_for_80pct_late: "Smallest number of top-ranked lanes (by late pairs) whose cumulative late pairs reach at least 80% of all late pairs, count."
+      pct_lanes_for_80pct_late: "n_lanes_for_80pct_late divided by all active lanes (n_lanes_active), in %."
+      top20_lanes_late_share_pct: "Late pairs on the 20 top-ranked lanes divided by all late pairs, in %."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute rankings and cumulative shares with DuckDB SQL window functions (SUM OVER ORDER BY late DESC, id ASC) via ./cq sql, instead of pandas."
+    tolerance_pct: 0.1
+    checks:
+      - {type: row_count, file: outputs/pareto_sellers.csv, min: 2500, max: 3200}
+      - {type: unique, file: outputs/pareto_sellers.csv, columns: [seller_id]}
+      - {type: no_missing, file: outputs/pareto_sellers.csv, columns: [rank, seller_id, late, delivered, cum_late, cum_late_share_pct]}
+      - {type: range, file: outputs/pareto_sellers.csv, column: cum_late_share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/pareto_lanes.csv, min: 250, max: 729}
+      - {type: unique, file: outputs/pareto_lanes.csv, columns: [lane]}
+      - {type: range, file: outputs/pareto_lanes.csv, column: cum_late_share_pct, min: 0, max: 100}
+      - {type: result_range, result: n_sellers_with_late, min: 500, max: 3000}
+      - {type: result_range, result: n_sellers_for_50pct_late, min: 10, max: 1500}
+      - {type: result_range, result: pct_sellers_for_50pct_late, min: 0.5, max: 50}
+      - {type: result_range, result: n_sellers_for_80pct_late, min: 50, max: 2500}
+      - {type: result_range, result: pct_sellers_for_80pct_late, min: 2, max: 80}
+      - {type: result_range, result: top20_sellers_late_share_pct, min: 2, max: 60}
+      - {type: result_range, result: n_lanes_with_late, min: 100, max: 729}
+      - {type: result_range, result: n_lanes_for_80pct_late, min: 5, max: 400}
+      - {type: result_range, result: pct_lanes_for_80pct_late, min: 1, max: 80}
+      - {type: result_range, result: top20_lanes_late_share_pct, min: 20, max: 95}
+    time_min: 20
+    time_max: 35
+    stop_and_ask: "The cumulative share does not end at exactly 100%, or late pairs here differ from S05's n_late_pairs."
+  - id: S07
+    title: How lateness relates to customer review scores
+    kind: analysis
+    goal: >-
+      On clean orders with a review, compare review scores across delay bands: on time (delay <= 0), 1-3 days late, more
+      than 3 days late. Sensitivity: repeat with cut-offs 2, 5 and 7 (bands on time, 1..k, more than k), and with a stricter
+      on-time rule (late if the delivery timestamp is after 00:00 of the estimated date, so same-day deliveries count late).
+      Report n, mean score and share of 1-2 star scores per band, and the Spearman correlation of delay_days with score.
+      State that this is association, not cause.
+    brief_sections: [Research questions, Answer standard, Definitions]
+    inputs: ["S01:outputs/orders_clean.csv"]
+    outputs: ["outputs/review_bands.csv"]
+    results: [n_reviewed_orders, review_mean_ontime, review_mean_late_1_3, review_mean_late_gt3, review_gap_gt3, pct_low_ontime, pct_low_late_1_3, pct_low_late_gt3, review_mean_late_1_2, review_mean_late_gt2, review_mean_late_1_5, review_mean_late_gt5, review_mean_late_1_7, review_mean_late_gt7, review_mean_ontime_strict, review_mean_late_strict, spearman_delay_score]
+    definitions:
+      n_reviewed_orders: "Clean delivered orders with a review_score after de-duplication, count (equals n_clean_with_review)."
+      review_mean_ontime: "Mean review_score of reviewed clean orders with delay_days <= 0, score 1-5."
+      review_mean_late_1_3: "Mean review_score of reviewed clean orders with delay_days from 1 to 3, score 1-5."
+      review_mean_late_gt3: "Mean review_score of reviewed clean orders with delay_days above 3, score 1-5."
+      review_gap_gt3: "Difference in mean review score, on-time reviewed clean orders minus reviewed clean orders more than 3 days late (review_mean_ontime minus review_mean_late_gt3), in score points."
+      pct_low_ontime: "Share of reviewed on-time orders (delay_days <= 0) with score 1 or 2, in %."
+      pct_low_late_1_3: "Share of reviewed orders with delay_days 1 to 3 with score 1 or 2, in %."
+      pct_low_late_gt3: "Share of reviewed orders with delay_days above 3 with score 1 or 2, in %."
+      review_mean_late_1_2: "Mean review_score of reviewed clean orders with delay_days 1 or 2."
+      review_mean_late_gt2: "Mean review_score of reviewed clean orders with delay_days above 2."
+      review_mean_late_1_5: "Mean review_score of reviewed clean orders with delay_days 1 to 5."
+      review_mean_late_gt5: "Mean review_score of reviewed clean orders with delay_days above 5."
+      review_mean_late_1_7: "Mean review_score of reviewed clean orders with delay_days 1 to 7."
+      review_mean_late_gt7: "Mean review_score of reviewed clean orders with delay_days above 7."
+      review_mean_ontime_strict: "Mean review_score of reviewed clean orders whose delivery timestamp is at or before 00:00 of the estimated date (strict on-time rule)."
+      review_mean_late_strict: "Mean review_score of reviewed clean orders whose delivery timestamp is after 00:00 of the estimated date (strict late rule)."
+      spearman_delay_score: "Spearman rank correlation between delay_days and review_score over reviewed clean orders, unitless (-1 to 1)."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute band means and shares with DuckDB SQL (./cq sql) CASE bands and AVG, and the Spearman correlation as the Pearson correlation of RANK() values in SQL, instead of pandas."
+    tolerance_pct: 0.5
+    checks:
+      - {type: row_count, file: outputs/review_bands.csv, min: 14, max: 14}
+      - {type: unique, file: outputs/review_bands.csv, columns: [scheme, band]}
+      - {type: no_missing, file: outputs/review_bands.csv, columns: [scheme, band, n_orders, mean_score, pct_low_score]}
+      - {type: range, file: outputs/review_bands.csv, column: mean_score, min: 1, max: 5}
+      - {type: range, file: outputs/review_bands.csv, column: pct_low_score, min: 0, max: 100}
+      - {type: result_range, result: n_reviewed_orders, min: 90000, max: 96500}
+      - {type: result_range, result: review_mean_ontime, min: 3.8, max: 4.8}
+      - {type: result_range, result: review_mean_late_1_3, min: 2.0, max: 4.6}
+      - {type: result_range, result: review_mean_late_gt3, min: 1.0, max: 4.0}
+      - {type: result_range, result: review_gap_gt3, min: -1, max: 3.5}
+      - {type: result_range, result: pct_low_ontime, min: 2, max: 20}
+      - {type: result_range, result: pct_low_late_1_3, min: 2, max: 70}
+      - {type: result_range, result: pct_low_late_gt3, min: 10, max: 90}
+      - {type: result_range, result: review_mean_late_1_2, min: 1.5, max: 4.8}
+      - {type: result_range, result: review_mean_late_gt2, min: 1.0, max: 4.5}
+      - {type: result_range, result: review_mean_late_1_5, min: 1.5, max: 4.8}
+      - {type: result_range, result: review_mean_late_gt5, min: 1.0, max: 4.5}
+      - {type: result_range, result: review_mean_late_1_7, min: 1.5, max: 4.8}
+      - {type: result_range, result: review_mean_late_gt7, min: 1.0, max: 4.5}
+      - {type: result_range, result: review_mean_ontime_strict, min: 3.8, max: 4.8}
+      - {type: result_range, result: review_mean_late_strict, min: 1.0, max: 4.5}
+      - {type: result_range, result: spearman_delay_score, min: -0.8, max: 0.1}
+    time_min: 25
+    time_max: 40
+    stop_and_ask: "Any band has fewer than 100 reviewed orders, or the review's creation date is before delivery for most late orders (scores would not reflect the delivery)."
+  - id: S08
+    title: Promised against actual delivery time by lane
+    kind: analysis
+    goal: >-
+      For every lane in order_seller.csv compute delivered pairs, late rate, mean promised lead (est_lead_days_cal), mean
+      actual lead (act_lead_days_cal), mean buffer (estimated date minus delivered date, calendar days) and 90th-percentile
+      actual lead. Overall figures use orders_clean.csv. Size the problem on ranked lanes (at least 30 pairs) with a late
+      rate of 15% or more and compare their buffer with all other pairs.
+    brief_sections: [Research questions, Definitions]
+    inputs: ["S01:outputs/orders_clean.csv", "S02:outputs/order_seller.csv"]
+    outputs: ["outputs/lane_lead.csv"]
+    results: [est_lead_mean_days, act_lead_mean_days_cal, buffer_mean_days, n_lanes_late_ge15, late_pairs_lanes_late_ge15, share_late_pairs_lanes_ge15_pct, buffer_mean_lanes_ge15_days, buffer_mean_other_days]
+    definitions:
+      est_lead_mean_days: "Mean est_lead_days_cal (estimated date minus purchase calendar date) over all clean delivered orders, days."
+      act_lead_mean_days_cal: "Mean act_lead_days_cal (delivered calendar date minus purchase calendar date) over all clean delivered orders, days."
+      buffer_mean_days: "Mean of (estimated date minus delivered calendar date) over all clean delivered orders, days (equals minus the mean delay_days)."
+      n_lanes_late_ge15: "Lanes with at least 30 delivered order-seller pairs and a late rate of 15% or more, count."
+      late_pairs_lanes_late_ge15: "Late order-seller pairs on the lanes counted in n_lanes_late_ge15, count."
+      share_late_pairs_lanes_ge15_pct: "late_pairs_lanes_late_ge15 divided by all late order-seller pairs, in %."
+      buffer_mean_lanes_ge15_days: "Mean buffer (estimated minus delivered calendar date) over all order-seller pairs on the lanes in n_lanes_late_ge15, days."
+      buffer_mean_other_days: "Mean buffer over all order-seller pairs on all other lanes, days."
+    model: sonnet
+    critical: true
+    replication_method: "Recompute with DuckDB SQL (./cq sql) GROUP BY lane with date differences, instead of pandas."
+    tolerance_pct: 0.1
+    checks:
+      - {type: row_count, file: outputs/lane_lead.csv, min: 250, max: 729}
+      - {type: unique, file: outputs/lane_lead.csv, columns: [lane]}
+      - {type: no_missing, file: outputs/lane_lead.csv, columns: [lane, delivered, late_rate_pct, est_lead_mean_days, act_lead_mean_days, buffer_mean_days, ranked]}
+      - {type: range, file: outputs/lane_lead.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: range, file: outputs/lane_lead.csv, column: est_lead_mean_days, min: 0, max: 200}
+      - {type: range, file: outputs/lane_lead.csv, column: act_lead_mean_days, min: 0, max: 250}
+      - {type: result_range, result: est_lead_mean_days, min: 15, max: 35}
+      - {type: result_range, result: act_lead_mean_days_cal, min: 8, max: 18}
+      - {type: result_range, result: buffer_mean_days, min: 3, max: 20}
+      - {type: result_range, result: n_lanes_late_ge15, min: 0, max: 400}
+      - {type: result_range, result: late_pairs_lanes_late_ge15, min: 0, max: 15000}
+      - {type: result_range, result: share_late_pairs_lanes_ge15_pct, min: 0, max: 100}
+      - {type: result_range, result: buffer_mean_lanes_ge15_days, min: -20, max: 30}
+      - {type: result_range, result: buffer_mean_other_days, min: -10, max: 30}
+    time_min: 20
+    time_max: 30
+    stop_and_ask: "The overall mean buffer is not minus the mean delay_days within rounding, or no lane reaches 30 pairs."
+  - id: S09
+    title: Prepare the tables and chart data for the report
+    kind: report
+    goal: >-
+      Build one tidy CSV per report item from earlier outputs, by code only, no typed numbers:
+      t1_dq_log (copy of dq_log), t2_kpis (the 10 rows of kpi_overall: metric, value, unit),
+      t3_top_bottom (worst 10 and best 10 ranked lanes, sellers and categories: dimension, list, rank, name, delivered, late, late_rate_pct),
+      t4_split (4 classes: split_class, late_pairs, share_pct, mean_handling_days, mean_transit_days),
+      t5_pareto (top 20 sellers and top 20 lanes: dimension, rank, name, late, delivered, late_rate_pct, cum_late_share_pct),
+      t6_reviews (review_bands), c1_monthly (shown months only: month, on_time_rate_pct, late_share_pct),
+      c2_state_late (customer_state, late_share_pct, sorted desc), c3_split_by_band, c4_pareto_curve (pct_of_sellers 1-100,
+      cumulative late share of the top ceil(p% x active sellers) sellers), c5_review_bands (3 main bands: delay_band, n_orders, mean_score),
+      c6_lane_lead (20 lanes with most delivered pairs: lane, delivered, est_lead_mean_days, act_lead_mean_days).
+    brief_sections: [Report spec]
+    inputs: ["S02:outputs/dq_log.csv", "S03:outputs/kpi_overall.csv", "S03:outputs/monthly.csv", "S04:outputs/late_by_seller.csv", "S04:outputs/late_by_lane.csv", "S04:outputs/late_by_category.csv", "S04:outputs/late_by_state.csv", "S05:outputs/split_summary.csv", "S05:outputs/split_by_band.csv", "S06:outputs/pareto_sellers.csv", "S06:outputs/pareto_lanes.csv", "S07:outputs/review_bands.csv", "S08:outputs/lane_lead.csv"]
+    outputs: ["outputs/t1_dq_log.csv", "outputs/t2_kpis.csv", "outputs/t3_top_bottom.csv", "outputs/t4_split.csv", "outputs/t5_pareto.csv", "outputs/t6_reviews.csv", "outputs/c1_monthly.csv", "outputs/c2_state_late.csv", "outputs/c3_split_by_band.csv", "outputs/c4_pareto_curve.csv", "outputs/c5_review_bands.csv", "outputs/c6_lane_lead.csv"]
+    model: sonnet
+    critical: false
+    checks:
+      - {type: row_count, file: outputs/t1_dq_log.csv, min: 8, max: 30}
+      - {type: no_missing, file: outputs/t1_dq_log.csv, columns: [issue, source_file, rows_found, action, rows_removed, reason]}
+      - {type: row_count, file: outputs/t2_kpis.csv, min: 10, max: 10}
+      - {type: unique, file: outputs/t2_kpis.csv, columns: [metric]}
+      - {type: no_missing, file: outputs/t2_kpis.csv, columns: [metric, value, unit]}
+      - {type: row_count, file: outputs/t3_top_bottom.csv, min: 60, max: 60}
+      - {type: unique, file: outputs/t3_top_bottom.csv, columns: [dimension, list, rank]}
+      - {type: no_missing, file: outputs/t3_top_bottom.csv, columns: [dimension, list, rank, name, delivered, late, late_rate_pct]}
+      - {type: range, file: outputs/t3_top_bottom.csv, column: late_rate_pct, min: 0, max: 100}
+      - {type: range, file: outputs/t3_top_bottom.csv, column: delivered, min: 30, max: 100000}
+      - {type: row_count, file: outputs/t4_split.csv, min: 4, max: 4}
+      - {type: no_missing, file: outputs/t4_split.csv, columns: [split_class, late_pairs, share_pct]}
+      - {type: range, file: outputs/t4_split.csv, column: share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/t5_pareto.csv, min: 40, max: 40}
+      - {type: unique, file: outputs/t5_pareto.csv, columns: [dimension, rank]}
+      - {type: no_missing, file: outputs/t5_pareto.csv, columns: [dimension, rank, name, late, delivered, late_rate_pct, cum_late_share_pct]}
+      - {type: range, file: outputs/t5_pareto.csv, column: cum_late_share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/t6_reviews.csv, min: 14, max: 14}
+      - {type: no_missing, file: outputs/t6_reviews.csv, columns: [scheme, band, n_orders, mean_score, pct_low_score]}
+      - {type: range, file: outputs/t6_reviews.csv, column: mean_score, min: 1, max: 5}
+      - {type: row_count, file: outputs/c1_monthly.csv, min: 15, max: 22}
+      - {type: unique, file: outputs/c1_monthly.csv, columns: [month]}
+      - {type: no_missing, file: outputs/c1_monthly.csv, columns: [month, on_time_rate_pct, late_share_pct]}
+      - {type: range, file: outputs/c1_monthly.csv, column: on_time_rate_pct, min: 0, max: 100}
+      - {type: range, file: outputs/c1_monthly.csv, column: late_share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/c2_state_late.csv, min: 20, max: 27}
+      - {type: unique, file: outputs/c2_state_late.csv, columns: [customer_state]}
+      - {type: no_missing, file: outputs/c2_state_late.csv, columns: [customer_state, late_share_pct]}
+      - {type: range, file: outputs/c2_state_late.csv, column: late_share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/c3_split_by_band.csv, min: 4, max: 4}
+      - {type: no_missing, file: outputs/c3_split_by_band.csv, columns: [days_late_band, seller_only, both, carrier_only]}
+      - {type: range, file: outputs/c3_split_by_band.csv, column: carrier_only, min: 0, max: 15000}
+      - {type: row_count, file: outputs/c4_pareto_curve.csv, min: 100, max: 100}
+      - {type: unique, file: outputs/c4_pareto_curve.csv, columns: [pct_of_sellers]}
+      - {type: no_missing, file: outputs/c4_pareto_curve.csv, columns: [pct_of_sellers, cum_late_share_pct]}
+      - {type: range, file: outputs/c4_pareto_curve.csv, column: pct_of_sellers, min: 1, max: 100}
+      - {type: range, file: outputs/c4_pareto_curve.csv, column: cum_late_share_pct, min: 0, max: 100}
+      - {type: row_count, file: outputs/c5_review_bands.csv, min: 3, max: 3}
+      - {type: no_missing, file: outputs/c5_review_bands.csv, columns: [delay_band, n_orders, mean_score]}
+      - {type: range, file: outputs/c5_review_bands.csv, column: mean_score, min: 1, max: 5}
+      - {type: row_count, file: outputs/c6_lane_lead.csv, min: 20, max: 20}
+      - {type: unique, file: outputs/c6_lane_lead.csv, columns: [lane]}
+      - {type: no_missing, file: outputs/c6_lane_lead.csv, columns: [lane, delivered, est_lead_mean_days, act_lead_mean_days]}
+      - {type: range, file: outputs/c6_lane_lead.csv, column: est_lead_mean_days, min: 1, max: 100}
+      - {type: range, file: outputs/c6_lane_lead.csv, column: act_lead_mean_days, min: 1, max: 100}
+    time_min: 30
+    time_max: 45
+    stop_and_ask: "Any table would need a number not present in an earlier step's output, or fewer than 10 ranked categories exist for the best and worst lists."
+  - id: S10
+    title: Choose the three fixes to make first
+    kind: report
+    goal: >-
+      Using only declared results from S01-S08, choose three concrete recommendations (for example a seller scorecard at the
+      15% late-rate threshold, realistic promised dates on the lanes at or above 15% late, and a handover-deadline rule if
+      seller delay dominates). Write t7_recommendations.csv with rec_no, recommendation, problem_targeted, size_result_id,
+      size_value, supporting_result_ids. size_value must be read by code from the earlier step's result, not typed.
+      No new numbers are created here.
+    brief_sections: [Research questions, Answer standard, Out of scope]
+    inputs: ["S03:outputs/kpi_overall.csv", "S04:outputs/late_by_seller.csv", "S05:outputs/split_summary.csv", "S06:outputs/pareto_sellers.csv", "S06:outputs/pareto_lanes.csv", "S07:outputs/review_bands.csv", "S08:outputs/lane_lead.csv"]
+    outputs: ["outputs/t7_recommendations.csv"]
+    model: opus
+    model_reason: "Picking the three fixes that the evidence best supports, and tying each fairly to the size of its problem, is a judgement call."
+    critical: false
+    checks:
+      - {type: row_count, file: outputs/t7_recommendations.csv, min: 3, max: 3}
+      - {type: unique, file: outputs/t7_recommendations.csv, columns: [rec_no]}
+      - {type: no_missing, file: outputs/t7_recommendations.csv, columns: [rec_no, recommendation, problem_targeted, size_result_id, size_value, supporting_result_ids]}
+      - {type: range, file: outputs/t7_recommendations.csv, column: rec_no, min: 1, max: 3}
+    time_min: 20
+    time_max: 35
+    stop_and_ask: "A sensible recommendation would need a number that no earlier step declared, or the evidence supports fewer than three distinct fixes."
+  - id: S11
+    title: Write the findings
+    kind: findings
+    goal: >-
+      Apply the Brief's answer standard to Q1-Q4 and write research_findings.md from templates/findings.md. Say that Q3
+      shows association, not cause, that multi-seller orders count once per seller in seller and lane figures, that thin
+      months are left out of the monthly chart, and that operations-quality methods are applied to a parcel network.
+    brief_sections: [Research questions, Answer standard, Definitions, Assumptions, Out of scope, Report spec]
+    inputs: ["S02:outputs/dq_log.csv", "S03:outputs/kpi_overall.csv", "S05:outputs/split_summary.csv", "S07:outputs/review_bands.csv", "S09:outputs/t3_top_bottom.csv", "S09:outputs/t5_pareto.csv", "S10:outputs/t7_recommendations.csv"]
+    outputs: ["research_findings.md"]
+    model: opus
+    model_reason: "The answers must follow the pre-set answer standard, grade each question honestly and state caveats fairly."
+    critical: false
+    checks:
+      - {type: file_exists, file: research_findings.md}
+    time_min: 20
+    time_max: 35
+    stop_and_ask: "A question can only be answered with a number that no step declared, or a critical step's replication disagreed beyond tolerance."

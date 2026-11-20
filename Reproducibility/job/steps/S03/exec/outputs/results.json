@@ -1,0 +1,80 @@
+{
+  "best_month_on_time_pct": {
+    "code": "code/kpi.py",
+    "description": "best month on-time",
+    "unit": "%",
+    "value": 98.8353
+  },
+  "handling_mean_days": {
+    "code": "code/kpi.py",
+    "description": "handling_mean_days",
+    "unit": "days",
+    "value": 2.853391242647016
+  },
+  "late_share_pct": {
+    "code": "code/kpi.py",
+    "description": "late_share_pct",
+    "unit": "%",
+    "value": 6.7730900798175595
+  },
+  "lead_mean_days": {
+    "code": "code/kpi.py",
+    "description": "lead_mean_days",
+    "unit": "days",
+    "value": 12.558217098051975
+  },
+  "lead_median_days": {
+    "code": "code/kpi.py",
+    "description": "lead_median_days",
+    "unit": "days",
+    "value": 10.217476851851853
+  },
+  "lead_p90_days": {
+    "code": "code/kpi.py",
+    "description": "lead_p90_days",
+    "unit": "days",
+    "value": 23.096377314814816
+  },
+  "mean_delay_late_days": {
+    "code": "code/kpi.py",
+    "description": "mean_delay_late_days",
+    "unit": "days",
+    "value": 10.620140801958984
+  },
+  "n_late_orders": {
+    "code": "code/kpi.py",
+    "description": "n_late_orders",
+    "unit": "orders",
+    "value": 6534.0
+  },
+  "n_months_all": {
+    "code": "code/kpi.py",
+    "description": "distinct purchase months",
+    "unit": "months",
+    "value": 23.0
+  },
+  "n_months_shown": {
+    "code": "code/kpi.py",
+    "description": "months with >=500 delivered",
+    "unit": "months",
+    "value": 20.0
+  },
+  "on_time_rate_pct": {
+    "code": "code/kpi.py",
+    "description": "on_time_rate_pct",
+    "unit": "%",
+    "value": 93.22690992018245
+  },
+  "transit_mean_days": {
+    "code": "code/kpi.py",
+    "description": "transit_mean_days",
+    "unit": "days",
+    "value": 9.333301671977642
+  },
+  "worst_month_on_time_pct": {
+    "code": "code/kpi.py",
+    "description": "worst month on-time",
+    "unit": "%",
+    "value": 81.0367
+  }
+}

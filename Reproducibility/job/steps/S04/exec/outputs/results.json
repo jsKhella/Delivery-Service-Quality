@@ -1,0 +1,104 @@
+{
+  "category_late_rate_max_pct": {
+    "code": "code/late.py",
+    "description": "max category late rate",
+    "unit": "%",
+    "value": 13.5135
+  },
+  "category_late_rate_min_pct": {
+    "code": "code/late.py",
+    "description": "min category late rate",
+    "unit": "%",
+    "value": 0.0
+  },
+  "lane_late_rate_max_pct": {
+    "code": "code/late.py",
+    "description": "max lane late rate",
+    "unit": "%",
+    "value": 30.5556
+  },
+  "lane_late_rate_min_pct": {
+    "code": "code/late.py",
+    "description": "min lane late rate",
+    "unit": "%",
+    "value": 0.0
+  },
+  "late_pairs_sellers_late_ge15": {
+    "code": "code/late.py",
+    "description": "late pairs of those sellers",
+    "unit": "pairs",
+    "value": 516.0
+  },
+  "n_categories_ranked": {
+    "code": "code/late.py",
+    "description": "categories with >=30 pairs",
+    "unit": "categories",
+    "value": 63.0
+  },
+  "n_lanes_ranked": {
+    "code": "code/late.py",
+    "description": "lanes with >=30 pairs",
+    "unit": "lanes",
+    "value": 125.0
+  },
+  "n_late_pairs_total": {
+    "code": "code/late.py",
+    "description": "late order-seller pairs",
+    "unit": "pairs",
+    "value": 6547.0
+  },
+  "n_sellers_late_ge15": {
+    "code": "code/late.py",
+    "description": "ranked sellers with late rate >=15%",
+    "unit": "sellers",
+    "value": 37.0
+  },
+  "n_sellers_ranked": {
+    "code": "code/late.py",
+    "description": "sellers with >=30 pairs",
+    "unit": "sellers",
+    "value": 627.0
+  },
+  "n_states_ranked": {
+    "code": "code/late.py",
+    "description": "states with >=30 orders",
+    "unit": "states",
+    "value": 27.0
+  },
+  "seller_late_rate_max_pct": {
+    "code": "code/late.py",
+    "description": "max seller late rate",
+    "unit": "%",
+    "value": 32.5581
+  },
+  "seller_late_rate_median_pct": {
+    "code": "code/late.py",
+    "description": "median seller late rate",
+    "unit": "%",
+    "value": 5.4688
+  },
+  "seller_late_rate_min_pct": {
+    "code": "code/late.py",
+    "description": "min seller late rate",
+    "unit": "%",
+    "value": 0.0
+  },
+  "share_late_pairs_sellers_late_ge15_pct": {
+    "code": "code/late.py",
+    "description": "share of late pairs",
+    "unit": "%",
+    "value": 7.881472430120666
+  },
+  "state_late_rate_max_pct": {
+    "code": "code/late.py",
+    "description": "max state late rate",
+    "unit": "%",
+    "value": 21.4106
+  },
+  "state_late_rate_min_pct": {
+    "code": "code/late.py",
+    "description": "min state late rate",
+    "unit": "%",
+    "value": 2.7586
+  }
+}

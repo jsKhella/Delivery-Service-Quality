@@ -1,0 +1,11 @@
+metric,value,unit
+delivered_orders,96470.0,orders
+on_time_rate_pct,93.2269,%
+late_share_pct,6.7731,%
+n_late_orders,6534.0,orders
+lead_mean_days,12.5582,days
+lead_median_days,10.2175,days
+lead_p90_days,23.0964,days
+mean_delay_late_days,10.6201,days
+handling_mean_days,2.8534,days
+transit_mean_days,9.3333,days
