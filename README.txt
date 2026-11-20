@@ -37,7 +37,7 @@ LIMITATIONS
 
 
 REPRODUCIBILITY
-Sources and code necessary to reproduce the project's findings are available in dedicated folders.
+Sources and code necessary to reproduce the project's findings are available in dedicated folder.
 
 
 ABOUT ME
