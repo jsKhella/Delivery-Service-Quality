@@ -1,5 +1,6 @@
 ABOUT ME: I'm Mina Khella, BSc student of statistics and economics at Università degli studi di Milano Bicocca.
-CURIOSITY is a research assistant designed by me and built on Claude. AI workers find the data, write the code and draft the text. Automatic scripts, which involve no AI, decide whether the work passes, this note explains those checks, and also what they do not prove.
+CURIOSITY is a research assistant designed by me and built on Claude. AI workers find the data, write the code and draft the text. 
+Automatic scripts, which involve no AI, decide whether the work passes: this note explains those checks, and what they do not prove.
 
 1. BEFORE ANY DATA IS LOOKED AT
 
