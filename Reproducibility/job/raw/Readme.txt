@@ -1,1 +1,0 @@
-This is the directory where you should transfer the 9 csv files listed in SOURCES.md.
