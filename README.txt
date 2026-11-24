@@ -36,10 +36,6 @@ LIMITATIONS
 - Not examined: freight cost, payments, profitability, forecasting.
 
 
-REPRODUCIBILITY
-Sources and code necessary to reproduce the project's findings are available in dedicated folder.
-
-
 ABOUT ME
 Mina Khella. BSc Statistics & Economics, Università degli studi di Milano-Bicocca. 
 Linkedin -> https://www.linkedin.com/in/mina-khella-812113182/
