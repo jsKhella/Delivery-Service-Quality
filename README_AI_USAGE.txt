@@ -6,9 +6,9 @@ The analysis was carried out by CURIOSITY, a set of cooperating Claude agents (r
 
 THE AGENTS AND WHAT EACH ONE DOES
 ---------------------------------
--Orchestrator (main session): the only agent that talked to me. It interviews the owner, writes the Research Brief (questions, definitions, what counts as "answered"), starts the other agents and reports progress. It never reads data or code: the system blocks it.
+-Orchestrator (main session): the only agent that talked to me. It interviews the human, writes the Research Brief (questions, definitions, what counts as "answered"), starts the other agents and reports progress. It never reads data or code: the system blocks it.
 -Scout: finds free public data, downloads it and seals each file with a fingerprint.
--Planner: turns the Brief into a step-by-step plan with pre-written checks (ranges, row counts, no missing values) and marks which steps are critical. I visioned the plan and approved it before any work was done.
+-Planner: turns the Brief into a step-by-step plan with pre-written checks (ranges, row counts, no missing values) and marks which steps are critical. I visioned the plan and approved it before any work was started.
 -Executor: carries out exactly one step from a written packet, writes the code and records each result through code.
 -Replicator (blind): independently recomputes every critical step with a different method, without seeing the Executor's results or messages.
 -Verifier: reviews each finished step against the plan and Brief and writes PASS or FAIL.
@@ -33,5 +33,5 @@ WHAT ACTUALLY HAPPENED
 WHAT THIS DOES NOT GUARANTEE
 ----------------------------
 - Judgment calls (choice of peers, industry beta, scenario and simulation ranges) were made by the joined work of the agents and I and are reported with their limits. The checks test the arithmetic and consistency, not whether an assumption is right.
-- The blind replica works from the same data and the same written definitions, so a shared misreading of a definition could pass both: I visioned and approved the complete project, definitions and assumptions ahead of work and my judgement is the only guarantee against this potential weak point
+- The blind replica works from the same data and the same written definitions, so a shared misreading of a definition could pass both: I visioned and approved the complete project, definitions and assumptions ahead of work and my judgement is the only guarantee against this potential weak point.
 - The result is an academic exercise. It is not investment advice.
