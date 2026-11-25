@@ -23,7 +23,7 @@ METHOD
 
 
 DATA SOURCES
-- Olist Brazilian E-Commerce Public Dataset (9 CSV files, from Kaggle, supplied by the owner, Tier 2): customers, geolocation, order items, payments, orders, reviews, products, sellers, product category name translation.
+- Olist Brazilian E-Commerce Public Dataset (9 CSV files from Kaggle, supplied by me, Mina Khella): customers, geolocation, order items, payments, orders, reviews, products, sellers, product category name translation.
 - Covers Brazil, 2016 to 2018. Each file was sealed with a fingerprint and checked for changes at every step. No other data and no external benchmarks were used.
 
 
