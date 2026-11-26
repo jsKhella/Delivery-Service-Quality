@@ -36,4 +36,4 @@ WHAT THIS DOES NOT GUARANTEE
 ----------------------------
 - Judgment calls were made by the joined work of the agents and I and are reported with their limits. The checks test the arithmetic and consistency, not whether an assumption is right.
 - The blind replica works from the same data and the same written definitions, so a shared misreading of a definition could pass both: I visioned and approved the complete project, definitions and assumptions ahead of work and my judgement is the only guarantee against this potential weak point.
-- The result is an academic exercise. It is not investment advice.
+- The result is an academic exercise.
